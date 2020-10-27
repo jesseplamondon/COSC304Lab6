@@ -8,7 +8,7 @@ class EnrollDB:
         try:
             # TODO: Fill in your connection information
             print("Connecting to database.")
-            self.cnx = mysql.connector.connect(user='todo', password='todo', host='cosc304.ok.ubc.ca', database='db_todo')
+            self.cnx = mysql.connector.connect(user='jalgra', password='66156324', host='cosc304.ok.ubc.ca', database='db_jalgra')
             return self.cnx
         except mysql.connector.Error as err:  
             print(err)   
@@ -58,7 +58,11 @@ class EnrollDB:
         
         output = "sid, sname, sex, birthdate, gpa"
         cursor = self.cnx.cursor()
-        # TODO: Execute query and build output string                
+        # TODO: Execute query and build output string
+        query = "SELECT * FROM student"
+        cursor.execute(query)
+        for(sid, sname, sex, birthdate, gpa) in cursor:
+            output += "\n" + sid + ", " + sname + ", " + sex + ", " + str(birthdate) + ", " + str(gpa)
         cursor.close()
         
         return output
@@ -71,8 +75,15 @@ class EnrollDB:
            Returns:
                     String containing professor information"""
 
-        # TODO: Execute query and build output string 
-        return ""
+        # TODO: Execute query and build output string
+        profs = "Professor Name, Department Name"
+        cursor = self.cnx.cursor()
+        query = "SELECT * FROM prof WHERE dname = %s"
+        cursor.execute(query, (deptName,))
+        for (pname, dname) in cursor:
+            profs += "\n" + pname + ", " + dname
+        cursor.close()
+        return profs
 
     def listCourseStudents(self, courseNum):
         """Returns a String with all students in a given course number (all sections).
@@ -82,8 +93,15 @@ class EnrollDB:
             Return:
                  String containing students"""
 
-        # TODO: Execute query and build output string 
-        return ""
+        # TODO: Execute query and build output string
+        courseStu = "Student Id, Student Name, Course Number, Section Number"
+        cursor = self.cnx.cursor()
+        query = "SELECT sid, sname, cnum, secnum FROM student NATURAL JOIN enroll WHERE cnum = %s "
+        cursor.execute(query, (courseNum,))
+        for(row) in cursor:
+            courseStu += "\n" + ", ".join(row)
+        cursor.close()
+        return courseStu
 
     def computeGPA(self, studentId):
         """Returns a cursor with a row containing the computed GPA (named as gpa) for a given student id."""
@@ -193,7 +211,7 @@ print("Executing list professors in a department: none")
 print(enrollDB.listDeptProfessors("none"))
 
 print("Executing list students in course: COSC 304")
-enrollDB.listCourseStudents("COSC 304")
+print(enrollDB.listCourseStudents("COSC 304"))
 print("Executing list students in course: DATA 301")
 enrollDB.listCourseStudents("DATA 301")
 
