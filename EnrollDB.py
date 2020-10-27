@@ -56,16 +56,18 @@ class EnrollDB:
 
         print("Executing list all students.")
         
-        output = "sid, sname, sex, birthdate, gpa"
+        output = ["sid, sname, sex, birthdate, gpa"]
         cursor = self.cnx.cursor()
         # TODO: Execute query and build output string
         query = "SELECT * FROM student"
         cursor.execute(query)
         for(sid, sname, sex, birthdate, gpa) in cursor:
-            output += "\n" + sid + ", " + sname + ", " + sex + ", " + str(birthdate) + ", " + str(gpa)
+            row = sid + ", " + sname + ", " + sex + ", " + str(birthdate) + ", " + str(gpa)
+            output.append(row)
+
         cursor.close()
         
-        return output
+        return "\n".join(output)
 
     def listDeptProfessors(self, deptName):
         """Returns a String with all the professors in a given department name.
@@ -76,14 +78,15 @@ class EnrollDB:
                     String containing professor information"""
 
         # TODO: Execute query and build output string
-        profs = "Professor Name, Department Name"
+        output = ["Professor Name, Department Name"]
         cursor = self.cnx.cursor()
         query = "SELECT * FROM prof WHERE dname = %s"
         cursor.execute(query, (deptName,))
         for (pname, dname) in cursor:
-            profs += "\n" + pname + ", " + dname
+            row = pname + ", " + dname
+            output.append(row)
         cursor.close()
-        return profs
+        return "\n".join(output)
 
     def listCourseStudents(self, courseNum):
         """Returns a String with all students in a given course number (all sections).
@@ -94,14 +97,16 @@ class EnrollDB:
                  String containing students"""
 
         # TODO: Execute query and build output string
-        courseStu = "Student Id, Student Name, Course Number, Section Number"
+        output = ["Student Id, Student Name, Course Number, Section Number"]
         cursor = self.cnx.cursor()
         query = "SELECT sid, sname, cnum, secnum FROM student NATURAL JOIN enroll WHERE cnum = %s "
         cursor.execute(query, (courseNum,))
-        for(row) in cursor:
-            courseStu += "\n" + ", ".join(row)
+        for(r) in cursor:
+            row = ", ".join(r)
+            output.append(row)
+
         cursor.close()
-        return courseStu
+        return "\n".join(output)
 
     def computeGPA(self, studentId):
         """Returns a cursor with a row containing the computed GPA (named as gpa) for a given student id."""
