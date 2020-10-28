@@ -55,18 +55,20 @@ class EnrollDB:
                 String containing all student information"""
 
         print("Executing list all students.")
-        
+        # formatted output as a list of strings where each string is one record
         output = ["sid, sname, sex, birthdate, gpa"]
         cursor = self.cnx.cursor()
         # TODO: Execute query and build output string
+        # simple SELECT all query
         query = "SELECT * FROM student"
         cursor.execute(query)
+        # format each row as a single string
         for(sid, sname, sex, birthdate, gpa) in cursor:
             row = sid + ", " + sname + ", " + sex + ", " + str(birthdate) + ", " + str(gpa)
             output.append(row)
 
         cursor.close()
-        
+        # join each row on a newline and return the resulting string
         return "\n".join(output)
 
     def listDeptProfessors(self, deptName):
@@ -78,14 +80,18 @@ class EnrollDB:
                     String containing professor information"""
 
         # TODO: Execute query and build output string
+        # formatted output as a list of strings where each string is one record
         output = ["Professor Name, Department Name"]
         cursor = self.cnx.cursor()
+        # prepared statement using passed department name
         query = "SELECT * FROM prof WHERE dname = %s"
         cursor.execute(query, (deptName,))
+        # format each row as a single string
         for (pname, dname) in cursor:
             row = pname + ", " + dname
             output.append(row)
         cursor.close()
+        # join each row on a newline and return the resulting string
         return "\n".join(output)
 
     def listCourseStudents(self, courseNum):
@@ -97,70 +103,112 @@ class EnrollDB:
                  String containing students"""
 
         # TODO: Execute query and build output string
+        # formatted output as a list of strings where each string is one record
         output = ["Student Id, Student Name, Course Number, Section Number"]
         cursor = self.cnx.cursor()
+        # prepared statement using the passed course number
         query = "SELECT sid, sname, cnum, secnum FROM student NATURAL JOIN enroll WHERE cnum = %s "
         cursor.execute(query, (courseNum,))
+        # format each row as a single string
         for(r) in cursor:
             row = ", ".join(r)
             output.append(row)
 
         cursor.close()
+        # join each row on a newline and return the resulting string
         return "\n".join(output)
 
     def computeGPA(self, studentId):
         """Returns a cursor with a row containing the computed GPA (named as gpa) for a given student id."""
 
         # TODO: Execute the query and return a cursor
-        return None
+        cursor = self.cnx.cursor()
+        # prepared statement using the passed student ID
+        query = "SELECT AVG(grade) AS gpa FROM enroll WHERE sid = %s GROUP BY sid"
+        cursor.execute(query, (studentId,))
+        return cursor
 
     def addStudent(self, studentId, studentName, sex, birthDate):
         """Inserts a student into the databases."""
-
+        cursor = self.cnx.cursor()
         # TODO: Execute statement. Make sure to commit
+        sql = "INSERT INTO student (sid, sname, sex, birthdate, gpa) VALUES (%s, %s, %s, %s, null)"
+        cursor.execute(sql, (studentId, studentName, sex, birthDate))
+        cursor.close()
+        self.cnx.commit()
         return  
     
     def deleteStudent(self, studentId):
         """Deletes a student from the databases."""
-
+        cursor = self.cnx.cursor()
         # TODO: Execute statement. Make sure to commit
+        sqlStu = "DELETE FROM student WHERE sid = %s"
+        sqlEn = "DELETE FROM enroll WHERE sid = %s"
+        cursor.execute(sqlStu, (studentId,))
+        cursor.execute(sqlEn, (studentId,))
+        cursor.close()
+        self.cnx.commit()
         return
 
     def updateStudent(self, studentId, studentName, sex, birthDate, gpa):
         """Updates a student in the databases."""
-
+        cursor = self.cnx.cursor()
         # TODO: Execute statement. Make sure to commit
+        sql = "UPDATE student SET sname = %s, sex = %s, birthDate = %s, gpa = %s WHERE sid = %s"
+        cursor.execute(sql, (studentName, sex, birthDate, gpa, studentId))
+        cursor.close()
+        self.cnx.commit()
         return
         
     def newEnroll(self, studentId, courseNum, sectionNum, grade):
         """Creates a new enrollment in a course section."""
-        
+        cursor = self.cnx.cursor()
         # TODO: Execute statement. Make sure to commit
+        sql = "INSERT INTO enroll (sid, cnum, secnum, grade) VALUES (%s, %s, %s, %s)"
+        cursor.execute(sql, (studentId, courseNum, sectionNum, grade))
+        cursor.close()
+        self.cnx.commit()
         return
 
     def updateStudentGPA(self, studentId):
         """ Updates a student's GPA based on courses taken."""
-
+        cursor = self.cnx.cursor()
         # TODO: Execute statement. Make sure to commit
+        sql = "UPDATE student SET gpa = (SELECT AVG(grade) AS gpa FROM enroll WHERE sid = %s GROUP BY sid) WHERE sid = %s"
+        cursor.execute(sql, (studentId, studentId))
+        cursor.close()
+        self.cnx.commit()
         return
 
     def removeStudentFromSection(self, studentId, courseNum, sectionNum):
         """Removes a student from a course and updates their GPA."""
-
+        cursor = self.cnx.cursor()
         # TODO: Execute statement. Make sure to commit
+        sql = "DELETE FROM enroll WHERE sid = %s AND cnum = %s AND secnum = %s"
+        cursor.execute(sql, (studentId, courseNum, sectionNum))
+        cursor.close()
+        self.cnx.commit()
+        self.updateStudentGPA(studentId)
         return
 
     def updateStudentMark(self, studentId, courseNum, sectionNum, grade):
         """Updates a student's mark in an enrolled course section and updates their grade."""
-
+        cursor = self.cnx.cursor()
         # TODO: Execute statement. Make sure to commit
+        sql = "UPDATE enroll SET grade = %s WHERE sid = %s AND cnum = %s AND secnum = %s"
+        cursor.execute(sql, (grade, studentId, courseNum, sectionNum))
+        cursor.close()
+        self.cnx.commit()
+        self.updateStudentGPA(studentId)
         return
 
     def query1(self):
         """Return the list of students (id and name) that have not registered in any course section. Hint: Left join can be used instead of a subquery."""
-
+        cursor = self.cnx.cursor()
         # TODO: Execute the query and return a cursor
-        return None
+        sql = "SELECT sid, sname FROM student WHERE sid NOT IN (SELECT sid FROM enroll)"
+        cursor.execute(sql)
+        return cursor
 
     def query2(self):
         """For each student return their id and name, number of course sections registered in (called numcourses), and gpa (average of grades). 
@@ -218,10 +266,10 @@ print(enrollDB.listDeptProfessors("none"))
 print("Executing list students in course: COSC 304")
 print(enrollDB.listCourseStudents("COSC 304"))
 print("Executing list students in course: DATA 301")
-enrollDB.listCourseStudents("DATA 301")
+print(enrollDB.listCourseStudents("DATA 301"))
 
 print("Executing compute GPA for student: 45671234")
-enrollDB.resultSetToString(enrollDB.computeGPA("45671234"),10)
+print(enrollDB.resultSetToString(enrollDB.computeGPA("45671234"),10))
 print("Executing compute GPA for student: 00000000")
 enrollDB.resultSetToString(enrollDB.computeGPA("45671234"),10)
 
