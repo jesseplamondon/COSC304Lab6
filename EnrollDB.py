@@ -59,7 +59,7 @@ class EnrollDB:
         output = ["sid, sname, sex, birthdate, gpa"]
         cursor = self.cnx.cursor()
         # TODO: Execute query and build output string
-        # simple SELECT all query
+        # simple SELECT all quers
         query = "SELECT * FROM student"
         cursor.execute(query)
         # format each row as a single string
@@ -87,8 +87,8 @@ class EnrollDB:
         query = "SELECT * FROM prof WHERE dname = %s"
         cursor.execute(query, (deptName,))
         # format each row as a single string
-        for (pname, dname) in cursor:
-            row = pname + ", " + dname
+        for (r) in cursor:
+            row = ", ".join(r)
             output.append(row)
         cursor.close()
         # join each row on a newline and return the resulting string
